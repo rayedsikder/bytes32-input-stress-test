@@ -1,22 +1,27 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
+  // const [owner] = await ethers.getSigners();
 
-  const lockedAmount = ethers.parseEther("0.001");
+  const Hash = await ethers.getContractFactory("Hash");
+  const hash = await Hash.deploy();
 
-  const lock = await ethers.deployContract("Lock", [unlockTime], {
-    value: lockedAmount,
-  });
+  await hash.deployed();
 
-  await lock.waitForDeployment();
+  console.log("Hash deployed to:", hash.address);
 
-  console.log(
-    `Lock with ${ethers.formatEther(
-      lockedAmount
-    )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.target}`
-  );
+  let key = [];
+  const arrayLength = 1270;
+  for (let i = 0; i < arrayLength; i++) {
+    key[i] = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("sampleHash" + i));
+  }
+  const startTime = Date.now();
+  let insertHash = await hash.insertHash(key, key);
+  const tx = await insertHash.wait();
+  console.log("Tx time:", Date.now() - startTime, "ms");
+  console.log(arrayLength, "Hash in array passed")
+  const gasUsed = await tx.gasUsed;
+  console.log("Gas used:", ethers.utils.formatEther(gasUsed), "BCTS");
 }
 
 // We recommend this pattern to be able to use async/await everywhere
